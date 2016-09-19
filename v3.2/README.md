@@ -40,7 +40,7 @@ We will use master as our jump host to install OpenShift using Ansible.
 
 	Now you should be able to ssh from master host to the other (node) hosts.
 
-* `git clone` this repository onto the master host. You should now get the required ansible playbooks to prep the hosts
+* `git clone` the repository (https://github.com/VeerMuchandi/openshift-on-azure) onto the master host. For now using context-dir v3.2. You should now get the required ansible playbooks to prep the hosts
 
 * Update the `hosts.openshiftprep` file with the internal ip addresses of all the hosts (master and the node hosts). In my case these were `10.0.0.4, 10.0.0.5 and 10.0.0.6`
 
