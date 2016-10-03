@@ -1,0 +1,100 @@
+---
+- hosts: nodes
+  sudo: True
+  vars:
+    docker_storage_mount: /dev/sdc
+
+  vars_prompt:
+    - name: "rhn_user_name" 
+      prompt: "RHN UserName ?"      
+    - name: "rhn_password" 
+      prompt: "RHN Password ?"      
+
+  tasks:
+
+#  - name: Add hosts entries to be able to connect to RHN. Needed only on OS1
+#    blockinfile: 
+#      dest: /etc/hosts
+#      content: |
+#        209.132.183.44          xmlrpc.rhn.redhat.com
+#        23.204.148.218               content-xmlrpc.rhn.redhat.com
+#        209.132.183.49              subscription.rhn.redhat.com
+#        209.132.182.33 repository.jboss.org
+#        209.132.182.63 registry.access.redhat.com
+
+  - name: Subscribe the box 
+    redhat_subscription: state=present username={{ rhn_user_name }} password={{ rhn_password }}  pool='^(Employee SKU)$'
+
+  - name: Enable only required repositories with Subscription Manager
+    command: subscription-manager repos --disable="*" --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.3-rpms"
+
+  - name: Run yum update
+    yum: name=* state=latest
+
+  - yum: name=wget state=latest
+  - yum: name=vim-enhanced state=latest
+  - yum: name=net-tools state=latest
+  - yum: name=bind-utils state=latest
+  - yum: name=git state=latest
+  - yum: name=iptables-services state=latest
+  - yum: name=bridge-utils state=latest
+  - yum: name=bash-completion state=latest
+  - yum: name=atomic-openshift-utils state=latest
+
+  - name: Install Docker
+    yum: name=docker-1.10.3 state=installed update_cache=yes
+    register: dockerInstalled
+    notify:
+    - Start Docker
+
+  - meta: flush_handlers
+
+  - name: Insecure Registry Config 
+    lineinfile: dest=/etc/sysconfig/docker  regexp="^OPTIONS" line=OPTIONS='--selinux-enabled --insecure-registry 172.30.0.0/16 --log-opt max-size=1M --log-opt max-file=3' backup=yes backrefs=yes state=present
+    register: dockerConfigUpdated
+
+  #- name:  Create Docker Storage Config
+  #  when: dockerInstalled|success
+  #  shell: echo "DEVS={{ docker_storage_mount}}" > /etc/sysconfig/docker-storage-setup; echo "VG=docker-vg" >> /etc/sysconfig/docker-storage-setup
+  #  args:
+  #    creates: /etc/sysconfig/docker-storage-setup
+
+  - name: Create Docker Storage Config
+    blockinfile: 
+      dest: /etc/sysconfig/docker-storage-setup
+      create: yes
+      content: |
+        DEVS={{ docker_storage_mount}}
+        VG=docker-vg
+    register: dockerStorageConfigFileCreated
+    notify:
+    - Stop Docker
+    - Clean Docker Data
+
+  - meta: flush_handlers
+
+  - name: Check if LVS exists
+    shell: lvs | grep docker-pool | awk '{ print $1}'
+    register: dockerpoolLVS
+
+  - name: Docker Storage Setup 
+    when: dockerpoolLVS.stdout != "docker-pool" and dockerStorageConfigFileCreated|success
+    command: docker-storage-setup 
+    register: dockerStorageSetupComplete 
+    notify: 
+    - Stop Docker
+    - Clean Docker Data
+    - Start Docker
+
+ 
+  - meta: flush_handlers
+
+  handlers:
+  - name: Start Docker
+    service: name=docker state=started enabled=yes
+  
+  - name: Stop Docker
+    service: name=docker state=stopped 
+  
+  - name: Clean Docker Data         
+    command: rm -rf /var/lib/docker/*
