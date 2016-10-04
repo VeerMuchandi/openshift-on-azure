@@ -15,12 +15,13 @@ ansible_ssh_user=root
 # To deploy origin, change deployment_type to origin
 deployment_type=openshift-enterprise
 
-osm_default_subdomain=apps.devday.ocpcloud.com
+openshift_master_default_subdomain=apps.devday.ocpcloud.com
 osm_default_node_selector="region=primary"
-openshift_router_selector='region=infra'
+openshift_hosted_router_selector='region=infra'
 openshift_registry_selector='region=infra'
 #openshift_master_api_port=443
 #openshift_master_console_port=443
+openshift_hosted_metrics_deploy=true
 
 
 # enable htpasswd authentication

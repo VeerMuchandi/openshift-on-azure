@@ -1,0 +1,32 @@
+---
+- hosts: nodes 
+  sudo: True
+
+  tasks:
+  - name: Create Technology Preview File
+    lineinfile: dest=/etc/origin/master/tech-preview.js state=present create=yes line="window.OPENSHIFT_CONSTANTS.ENABLE_TECH_PREVIEW_FEATURE.pipelines= true;" backup=yes
+
+  - name: Add techpreview script - step 1
+    lineinfile: dest=/etc/origin/master/master-config.yaml state=present create=no insertafter="^  publicURL" line="  extensionScripts:"
+  - name: Add techpreview script - step 2
+    lineinfile: dest=/etc/origin/master/master-config.yaml state=present create=no insertafter="^  extensionScripts" line="    - /etc/origin/master/tech-preview.js"
+
+  - name: Enable Jenkins Plugin
+    blockinfile:
+      dest: /etc/origin/master/master-config.yaml
+      create: no
+      state: present
+      marker: "# {mark} ANSIBLE MANAGED BLOCK"
+      insertafter: EOF 
+      content: |
+        jenkinsPipelineConfig:
+          autoProvisionEnabled: true
+          parameters: null
+          serviceName: jenkins
+          templateName: jenkins-ephemeral
+          templateNamespace: openshift
+    register: addedJenkinsPlugin
+
+  - name: Restart Master
+    service: name=atomic-openshift-master state=restarted
+

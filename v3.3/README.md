@@ -40,7 +40,11 @@ We will use master as our jump host to install OpenShift using Ansible.
 
 	Now you should be able to ssh from master host to the other (node) hosts.
 
-* `git clone` the repository (https://github.com/VeerMuchandi/openshift-on-azure) onto the master host. For now using context-dir v3.2. You should now get the required ansible playbooks to prep the hosts
+* Install git
+```yum install git -y ```
+
+
+* `git clone` the repository (https://github.com/VeerMuchandi/openshift-on-azure) onto the master host. For now using context-dir v3.3. You should now get the required ansible playbooks to prep the hosts
 
 * Update the `hosts.openshiftprep` file with the internal ip addresses of all the hosts (master and the node hosts). In my case these were `10.0.0.4, 10.0.0.5 and 10.0.0.6`
 
@@ -99,6 +103,7 @@ openshift_router_selector='region=infra'
 openshift_registry_selector='region=infra'
 #openshift_master_api_port=443
 #openshift_master_console_port=443
+openshift_hosted_metrics_deploy=true
 
 
 # enable htpasswd authentication
@@ -122,6 +127,8 @@ Now run the OpenShift ansible installer
 ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
 ```
 
+Note that registry, router and metrics will all be installed.
+
 Once OpenShift is installed add users
 
 ```
@@ -129,6 +136,15 @@ touch /etc/openshift/openshift-passwd
 htpasswd /etc/openshift/openshift-passwd <<uname>>
 
 ``` 
+
+In OCP 3.3 there are certain tech preview features. Pipelines is one of them and is not enabled by default. Following steps will enable the same. I believe this will be temporary step until the tech preview becomes supported.
+
+* Ensure master host is listed in `hosts.master`
+* Run the post-install script that will enable pipelines feature
+
+```
+ansible-playbook -i hosts.master post-install.yml
+```
 
 ####Reset Nodes
 
