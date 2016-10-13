@@ -1,6 +1,9 @@
 ---
 - hosts: nodes 
-  sudo: True
+# sudo: True
+  remote_user: veer
+  become: True
+  become_method: sudo
 
   tasks:
   - name: Create Technology Preview File

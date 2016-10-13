@@ -56,12 +56,12 @@ We will use master as our jump host to install OpenShift using Ansible.
 ansible-playbook -i hosts.openshiftprep openshifthostprep.yml
 ```
 
-Configure registry storage
+Configure storage server
 
-Edit the hosts.registrystorage file to include the master's hostname/ip and run the playbook that configures registry storage
+Edit the hosts.storage file to include the master's hostname/ip and run the playbook that configures storage
 
 ```
-ansible-playbook -i hosts.registrystorage install-registry-storage.yml 
+ansible-playbook -i hosts.storage configure-storage.yml 
 ```
 
 **DNS**
