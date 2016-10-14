@@ -12,6 +12,7 @@ ansible_ssh_user=veer
 
 # If ansible_ssh_user is not root, ansible_sudo must be set to true
 ansible_sudo=true
+ansible_become=yes
 
 # To deploy origin, change deployment_type to origin
 deployment_type=openshift-enterprise
