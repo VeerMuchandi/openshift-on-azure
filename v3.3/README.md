@@ -160,6 +160,7 @@ ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
 
 Note that registry, router and metrics will all be installed. 
 
+### Add Users
 Once OpenShift is installed add users
 
 ```
@@ -168,6 +169,7 @@ htpasswd /etc/openshift/openshift-passwd <<uname>>
 
 ``` 
 
+### Post Installation
 In OCP 3.3 there are certain tech preview features. Pipelines is one of them and is not enabled by default. Following steps will enable the same. I believe this will be temporary step until the tech preview becomes supported.
 
 * Ensure master host is listed in `hosts.master`
@@ -177,7 +179,7 @@ In OCP 3.3 there are certain tech preview features. Pipelines is one of them and
 ansible-playbook -i hosts.master post-install.yml
 ```
 
-####Reset Nodes
+###Reset Nodes
 
 If you ever want to clean up docker storage and reset the node(s):
 
