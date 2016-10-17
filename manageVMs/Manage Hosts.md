@@ -121,12 +121,26 @@ cd ../v3.3
 ### Stopping your VMs
 Use these steps to stop your VMs when they are not in use to conserve resources.
 
-<<Work in Progress>>
+**Note** This script assumes that I am using a pattern "dd-" on the hostname of every machine on my cluster. Change your pattern according to what you are using.
 
+```
+for i in $(azure vm list --resource-group $resourceGroupName | grep dd- | awk '{print $3}'); \
+do azure vm stop --resource-group $resourceGroupName $i; done
 
+for i in $(azure vm list --resource-group $resourceGroupName | grep dd- | awk '{print $3}'); \
+do azure vm deallocate --resource-group $resourceGroupName $i; done
 
+```
 
+### Starting your VMs
 
+**Note** This script assumes that I am using a pattern "dd-" on the hostname of every machine on my cluster. Change your pattern according to what you are using.
+
+```
+for i in $(azure vm list --resource-group $resourceGroupName | grep dd- | awk '{print $3}'); \
+do azure vm start --resource-group $resourceGroupName $i; done
+
+```
 
 
 ### Deleting your VMs
