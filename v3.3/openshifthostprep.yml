@@ -12,7 +12,9 @@
       prompt: "RHN UserName ?"      
     - name: "rhn_password" 
       prompt: "RHN Password ?"      
-
+    - name: "rhel_pool_id"
+      prompt: "RHN POOL ID ?"
+      
   tasks:
 
 #  - name: Add hosts entries to be able to connect to RHN. Needed only on OS1
@@ -25,8 +27,26 @@
 #        209.132.182.33 repository.jboss.org
 #        209.132.182.63 registry.access.redhat.com
 
-  - name: Subscribe the box 
-    redhat_subscription: state=present username={{ rhn_user_name }} password={{ rhn_password }}  pool='^(Employee SKU)$'
+  - name: Force unregister before register
+    redhat_subscription:
+      state: absent
+    ignore_errors: true
+  
+  - name: register node with subscription-manager
+    redhat_subscription: state=present username="{{ rhn_user_name }}" password="{{ rhn_password }}" autosubscribe=false
+    register: task_result
+    until: task_result | succeeded
+    retries: 10
+    delay: 5
+  
+  - name: attach node to subscription pool
+    command: subscription-manager attach --pool {{ item }}
+    register: task_result
+    until: task_result.rc == 0
+    retries: 10
+    delay: 1
+    ignore_errors: no
+    with_items: '{{rhel_pool_id}}'
 
   - name: Enable only required repositories with Subscription Manager
     command: subscription-manager repos --disable="*" --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.3-rpms"
