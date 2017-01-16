@@ -30,6 +30,11 @@ Run the following script to create the Network Security Group. This has the fire
 ```
 source ./createNetworkSecurityGroup.sh
 ```
+**NOTE:** Make sure you have the `Microsoft.Network` provider registered. To do so execute:
+
+```
+azure provider register Microsoft.Network
+```
 
 The script has the following commands
 
