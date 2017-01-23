@@ -20,7 +20,7 @@ echo "subnetId: $subnetId"
 # Add Master Host
 publicIPName="devdayMasterPublicIP"
 nicName="devdayMasterNIC"
-vmName="devday-master"
+vmName="dd-master"
 vmSize="Standard_DS2_V2"
 echo "Adding $vmName"
 source ./deleteMaster.sh
@@ -29,7 +29,7 @@ source ./deleteMaster.sh
 # Add InfraNode1
 publicIPName="devdayInfraNode1PublicIP"
 nicName="devdayInfraNode1NIC"
-vmName="devday-infranode1"
+vmName="dd-inode1"
 vmSize="Standard_DS2_V2"
 echo "Adding $vmName"
 
@@ -38,7 +38,7 @@ source ./deleteMaster.sh
 #Add InfraNode2
 publicIPName="devdayInfraNode2PublicIP"
 nicName="devdayInfraNode2NIC"
-vmName="devday-infranode2"
+vmName="dd-inode2"
 vmSize="Standard_DS2_V2"
 echo "Adding $vmName"
 
@@ -46,7 +46,7 @@ source ./deleteMaster.sh
 
 #Add AppNode1
 nicName="devdayNode1NIC"
-vmName="devday-node1"
+vmName="dd-node1"
 vmSize="Standard_DS12_V2"
 echo "Adding $vmName"
 
@@ -54,7 +54,7 @@ source ./deleteNode.sh
 
 #Add AppNode2
 nicName="devdayNode2NIC"
-vmName="devday-node2"
+vmName="dd-node2"
 vmSize="Standard_DS12_V2"
 echo "Adding $vmName"
 
@@ -62,7 +62,7 @@ source ./deleteNode.sh
 
 #Add AppNode3
 nicName="devdayNode3NIC"
-vmName="devday-node3"
+vmName="dd-node3"
 vmSize="Standard_DS12_V2"
 echo "Adding $vmName"
 

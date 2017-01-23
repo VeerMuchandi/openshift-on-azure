@@ -1,0 +1,109 @@
+devday
+OCPdevday12#
+
+
+
+Install an Infra node so that Router runs there.
+Install master to run on 443
+
+https://azure.microsoft.com/en-us/documentation/articles/virtual-network-deploy-static-pip-arm-cli/
+
+location="eastus2"
+resourceGroupName="openshift-workshop"
+vnetName="openshift-workshop-vnet"
+subnetName="default"
+subnetAddressPrefix="10.0.0.0/24"
+networkSecurityGroup="master-workshop"
+storageAccountName="openshiftworkshop"
+adminUserName="veer"
+
+masterPublicIPName="devdayMasterPublicIP"
+masterNicName="devdayMasterNIC"
+masterVMName="devday-master"
+masterVMSize="Standard_DS2"
+
+
+
+
+
+
+azure network vnet create --resource-group $resourceGroupName \
+--name $vnetName \
+--location $location
+
+azure network vnet subnet create --resource-group $resourceGroupName \
+    --vnet-name $vnetName \
+    --address-prefix $subnetAddressPrefix \
+    --name $subnetName 
+
+
+subnetId="$(azure network vnet subnet show --resource-group $resourceGroupName \
+                --vnet-name $vnetName \
+                --name $subnetName|grep Id)"
+subnetId=${subnetId#*/}  
+
+
+#### REPEAT for each VM START ###
+
+publicIPName=$masterPublicIPName
+nicName=$masterNicName
+vmName=$masterVMName
+vmSize=$masterVMSize
+
+
+publicIPName="devdayInfraNode1PublicIP"
+nicName="devdayInfraNode1NIC"
+vmName="devday-infranode1"
+vmSize="Standard_DS2"
+
+
+azure network public-ip create --resource-group $resourceGroupName \
+    --name $publicIPName \
+    --location $location \
+    --allocation-method Static 
+
+azure network nic create --name $nicName \
+    --resource-group $resourceGroupName \
+    --location $location \
+    --subnet-id $subnetId \
+    --network-security-group-name $networkSecurityGroup \
+    --public-ip-name $publicIPName              
+
+
+azure vm create --resource-group $resourceGroupName \
+    --name $vmName \
+    --location $location \
+    --vm-size $vmSize \
+    --subnet-id $subnetId \
+    --nic-names $nicName \
+    --os-type linux \
+    --image-urn RHEL \
+    --storage-account-name $storageAccountName \
+    --admin-username $adminUserName \
+    --ssh-publickey-file ~/.ssh/id_rsa.pub
+    
+#### REPEAT for each VM END ####
+
+
+              
+###DELETE SCRIPTS####
+
+
+### REPEAT for each host
+azure vm delete --resource-group $resourceGroupName \
+    --name $vmName
+
+azure network nic delete --name $nicName \
+    --resource-group $resourceGroupName 
+
+azure network public-ip delete --name $publicIPName \
+ --resource-group $resourceGroupName
+######## 
+ 
+ 
+
+azure network vnet subnet delete --resource-group $resourceGroupName \
+    --vnet-name $vnetName \
+    --name $subnetName 
+    
+azure network vnet delete --name $vnetName --resource-group $resourceGroupName

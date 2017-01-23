@@ -23,4 +23,4 @@ azure vm create --resource-group $resourceGroupName \
     --admin-username $adminUserName \
     --ssh-publickey-file ~/.ssh/id_rsa.pub
 
-azure vm disk attach-new $resourceGroupName $vmName 30
+azure vm disk attach-new $resourceGroupName $vmName 128

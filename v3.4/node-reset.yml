@@ -77,6 +77,7 @@
   
   - name: Start atomic-openshift-node
     service: name=atomic-openshift-node state=started
+    ignore_errors: yes
   
 
 

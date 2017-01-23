@@ -1,0 +1,69 @@
+# cat /etc/ansible/hosts
+# Create an OSEv3 group that contains the masters and nodes groups
+[OSEv3:children]
+masters
+nodes
+nfs
+
+# Set variables common for all OSEv3 hosts
+[OSEv3:vars]
+# SSH user, this user should allow ssh based auth without requiring a password
+ansible_ssh_user=veer
+
+# If ansible_ssh_user is not root, ansible_sudo must be set to true
+ansible_sudo=true
+ansible_become=yes
+
+# To deploy origin, change deployment_type to origin
+deployment_type=openshift-enterprise
+
+openshift_master_default_subdomain=apps.devday.ocpcloud.com
+osm_default_node_selector="region=primary"
+openshift_hosted_router_selector='region=infra,zone=router'
+openshift_registry_selector='region=infra'
+openshift_master_api_port=443
+openshift_master_console_port=443
+
+openshift_hosted_registry_storage_nfs_directory=/exports
+
+
+# Metrics
+openshift_hosted_metrics_deploy=true
+openshift_hosted_metrics_storage_kind=nfs
+openshift_hosted_metrics_storage_access_modes=['ReadWriteOnce']
+openshift_hosted_metrics_storage_nfs_directory=/exports
+openshift_hosted_metrics_storage_nfs_options='*(rw,root_squash)'
+openshift_hosted_metrics_storage_volume_name=metrics
+openshift_hosted_metrics_storage_volume_size=10Gi
+
+# Logging
+openshift_hosted_logging_deploy=true
+openshift_hosted_logging_storage_kind=nfs
+openshift_hosted_logging_storage_access_modes=['ReadWriteOnce']
+openshift_hosted_logging_storage_nfs_directory=/exports
+openshift_hosted_logging_storage_nfs_options='*(rw,root_squash)'
+openshift_hosted_logging_storage_volume_name=logging
+openshift_hosted_logging_storage_volume_size=10Gi
+openshift_master_logging_public_url=https://kibana.apps.devday.ocpcloud.com
+openshift_hosted_logging_deployer_version=v3.4
+
+
+
+# enable htpasswd authentication
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/openshift/openshift-passwd'}]
+
+# host group for masters
+[masters]
+10.0.0.5
+
+[nfs]
+10.0.0.5
+
+# host group for nodes, includes region info
+[nodes]
+10.0.0.5 openshift_hostname=10.0.0.5 openshift_node_labels="{'region': 'infra', 'zone': 'default'}"  openshift_scheduleable=false openshift_public_hostname=master.devday.ocpcloud.com 
+10.0.0.6 openshift_hostname=10.0.0.6 openshift_node_labels="{'region': 'infra', 'zone': 'router'}" openshift_schedulable=True
+10.0.0.7 openshift_hostname=10.0.0.7 openshift_node_labels="{'region': 'infra', 'zone': 'router'}" openshift_schedulable=True
+10.0.0.8 openshift_hostname=10.0.0.8 openshift_node_labels="{'region': 'primary', 'zone': 'east'}" 
+10.0.0.9 openshift_hostname=10.0.0.9 openshift_node_labels="{'region': 'primary', 'zone': 'west'}" 
+10.0.0.10 openshift_hostname=10.0.0.10 openshift_node_labels="{'region': 'primary', 'zone': 'east'}" 

@@ -26,7 +26,7 @@ echo "Adding $vmName"
 source ./createMasterHost.sh
 
 # add additional storage for Registry and Metrics PVs. 
-azure vm disk attach-new $resourceGroupName $vmName 120
+azure vm disk attach-new $resourceGroupName $vmName 128
 
 # Add InfraNode1
 publicIPName="devdayInfraNode1PublicIP"
