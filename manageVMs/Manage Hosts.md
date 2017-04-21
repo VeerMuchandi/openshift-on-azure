@@ -6,7 +6,7 @@ We will now create the Master and Node Hosts on Azure from the Jump Server. We w
 
 There are two scripts that do host creation. 
 
-* createMasterHost.sh is used for creating the hosts that require PublicIPs. We will use PublicIPs only for the master(s) and infra-node(s). The script creates a PublicIP, NIC and a VM. It also attaches an extra 30Gbn storage to the VM which we will use to create docker thinpool. The content of this script is as under:
+* createMasterHost.sh is used for creating the hosts that require PublicIPs. We will use PublicIPs only for the master(s) and infra-node(s). The script creates a PublicIP, NIC and a VM. It also attaches an extra 128Gb storage to the VM which we will use to create docker thinpool. The content of this script is as under:
 
 ```
 cat createMasterHost.sh 
@@ -35,11 +35,11 @@ azure vm create --resource-group $resourceGroupName \
     --admin-username $adminUserName \
     --ssh-publickey-file ~/.ssh/id_rsa.pub
 
-azure vm disk attach-new $resourceGroupName $vmName 30
+azure vm disk attach-new $resourceGroupName $vmName 128
 
 ```
 
-* createNodeHost.sh script is used for application nodes where we don't use PublicIPs. The script creates NIC and a VM. It also attaches 30GB storage for docker thinpool. Here is how the script looks like
+* createNodeHost.sh script is used for application nodes where we don't use PublicIPs. The script creates NIC and a VM. It also attaches 128GB storage for docker thinpool. Here is how the script looks like
 
 ```
 cat createNodeHost.sh 
@@ -62,7 +62,7 @@ azure vm create --resource-group $resourceGroupName \
     --admin-username $adminUserName \
     --ssh-publickey-file ~/.ssh/id_rsa.pub
     
-azure vm disk attach-new $resourceGroupName $vmName 30
+azure vm disk attach-new $resourceGroupName $vmName 128
 ```
 
 **Important** The above two scripts are called from the script `addAzureHosts.sh`. Open this script and edit the list of hosts to add. Change the environment variables to your values. 
@@ -112,10 +112,10 @@ Get a list of public IP addresses by running this command. You will need these v
 azure vm list-ip-address --resource-group $resourceGroupName 
 ```
 
-Change to v3.3 folder as you have a sample hosts file and ansible playbooks there.
+Change to v3.4 folder as you have a sample hosts file and ansible playbooks there.
 
 ```
-cd ../v3.3
+cd ../v3.4
 ```
 
 ### Stopping your VMs
@@ -152,9 +152,10 @@ If you are deleting master or infra-nodes that use a PublicIP, do the following.
 * Set the relevant environment variables.. as an example
 
 ```
+resourceGroupName="openshift-workshop"
 publicIPName="devdayInfraNode1PublicIP"
 nicName="devdayInfraNode1NIC"
-vmName="devday-infranode1"
+vmName="dd-inode1"
 vmSize="Standard_DS2"
 ``` 
 
@@ -171,7 +172,7 @@ If you are delete a node that where we did not configure a PublicIP, do the foll
 
 ```
 nicName="devdayNode1NIC"
-vmName="devday-node1"
+vmName="dd-node1"
 vmSize="Standard_DS12_V2"
 ``` 
 
@@ -190,5 +191,5 @@ Remove all disk attach commands
 and run
 
 ```
-source deleteAzureHosts.sh
+source ./deleteAzureHosts.sh
 ``` 

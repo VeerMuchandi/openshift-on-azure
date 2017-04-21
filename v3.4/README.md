@@ -130,6 +130,18 @@ openshift_hosted_metrics_storage_nfs_options='*(rw,root_squash)'
 openshift_hosted_metrics_storage_volume_name=metrics
 openshift_hosted_metrics_storage_volume_size=10Gi
 
+# Logging
+openshift_hosted_logging_deploy=true
+openshift_hosted_logging_storage_kind=nfs
+openshift_hosted_logging_storage_access_modes=['ReadWriteOnce']
+openshift_hosted_logging_storage_nfs_directory=/exports
+openshift_hosted_logging_storage_nfs_options='*(rw,root_squash)'
+openshift_hosted_logging_storage_volume_name=logging
+openshift_hosted_logging_storage_volume_size=10Gi
+openshift_master_logging_public_url=https://kibana.apps.devday.ocpcloud.com
+openshift_hosted_logging_deployer_version=v3.4
+
+
 
 # enable htpasswd authentication
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/openshift/openshift-passwd'}]
@@ -143,12 +155,12 @@ openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 
 
 # host group for nodes, includes region info
 [nodes]
-10.0.0.5 openshift_node_labels="{'region': 'infra', 'zone': 'default'}"  openshift_scheduleable=false openshift_public_hostname=master.devday.ocpcloud.com
-10.0.0.6 openshift_node_labels="{'region': 'infra', 'zone': 'router'}" openshift_schedulable=True
-10.0.0.7 openshift_node_labels="{'region': 'infra', 'zone': 'router'}" openshift_schedulable=True
-10.0.0.8 openshift_node_labels="{'region': 'primary', 'zone': 'east'}" 
-10.0.0.9 openshift_node_labels="{'region': 'primary', 'zone': 'west'}" 
-10.0.0.10 openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
+10.0.0.5 openshift_hostname=10.0.0.5 openshift_node_labels="{'region': 'infra', 'zone': 'default'}"  openshift_scheduleable=false openshift_public_hostname=master.devday.ocpcloud.com 
+10.0.0.6 openshift_hostname=10.0.0.6 openshift_node_labels="{'region': 'infra', 'zone': 'router'}" openshift_schedulable=True
+10.0.0.7 openshift_hostname=10.0.0.7 openshift_node_labels="{'region': 'infra', 'zone': 'router'}" openshift_schedulable=True
+10.0.0.8 openshift_hostname=10.0.0.8 openshift_node_labels="{'region': 'primary', 'zone': 'east'}" 
+10.0.0.9 openshift_hostname=10.0.0.9 openshift_node_labels="{'region': 'primary', 'zone': 'west'}" 
+10.0.0.10 openshift_hostname=10.0.0.10 openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
 
 ```
 
@@ -169,17 +181,8 @@ htpasswd /etc/openshift/openshift-passwd <<uname>>
 
 ``` 
 
-### Post Installation
-In OCP 3.3 there are certain tech preview features. Pipelines is one of them and is not enabled by default. Following steps will enable the same. I believe this will be temporary step until the tech preview becomes supported.
 
-* Ensure master host is listed in `hosts.master`
-* Run the post-install script that will enable pipelines feature
-
-```
-ansible-playbook -i hosts.master post-install.yml
-```
-
-###Reset Nodes
+### Reset Nodes
 
 If you ever want to clean up docker storage and reset the node(s):
 
