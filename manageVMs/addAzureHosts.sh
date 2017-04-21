@@ -32,7 +32,7 @@ azure vm disk attach-new $resourceGroupName $vmName 128
 publicIPName="devdayInfraNode1PublicIP"
 nicName="devdayInfraNode1NIC"
 vmName="dd-inode1"
-vmSize="Standard_DS2_V2"
+vmSize="Standard_DS12_V2"
 echo "Adding $vmName"
 
 source ./createMasterHost.sh
@@ -41,7 +41,7 @@ source ./createMasterHost.sh
 publicIPName="devdayInfraNode2PublicIP"
 nicName="devdayInfraNode2NIC"
 vmName="dd-inode2"
-vmSize="Standard_DS2_V2"
+vmSize="Standard_DS12_V2"
 echo "Adding $vmName"
 
 source ./createMasterHost.sh
