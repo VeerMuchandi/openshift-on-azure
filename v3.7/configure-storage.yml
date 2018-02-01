@@ -1,9 +1,9 @@
 ---
 - hosts: nodes 
-# sudo: True
-  remote_user: veer
-  become: True
-  become_method: sudo
+# remote_user: veer
+# become: True
+# become_method: sudo
+  remote_user: root
   vars:
     storage_mount: /dev/sdd
   tasks:
