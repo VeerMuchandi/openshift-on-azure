@@ -31,13 +31,16 @@ adminPassword=ChangeMePleas3
 
 We will tie all the resources used by this cluster to a Resource Group. That way, removing a Resource Group will remove the entire cluster.
 
-The following script creates a resource group, a VNet and Subnet.
+The following script creates a resource group, a VNet, Subnet and a storage account.
+
+**NOTE:** Currently Azure has some issues with managed disks that slows down the entire install process and sometimes it fails. Hence we are using unmanaged disks for this setup which requires a storage account.
 
 ```
-$ cat 1.createRgVnetSubnet.sh 
+$ cat 1.createRgVnetSubnetSg.sh 
 
+#!/bin/bash
 echo "setting environment variables"
-source env.sh
+source 0.env.sh
 
 echo "creating resource group"
 az group create --location $location --resource-group $resourceGroupName
@@ -50,6 +53,12 @@ az network vnet create \
   --address-prefix $vnetAddressPrefix \
   --subnet-name $subnetName \
   --subnet-prefix $subnetAddressPrefix
+
+az storage account create \
+--resource-group $resourceGroupName \
+--location $location \
+--name $storageAccountName \
+--sku Premium_LRS
 ```
 
 Let us run the script to create these resources
@@ -135,16 +144,21 @@ az vm create --resource-group $resourceGroupName \
     --vnet-name $vnetName \
     --nsg $networkSecurityGroup \
     --image RHEL \
-    --data-disk-sizes-gb 20 60 \
+    --storage-account $storageAccountName \
+    --use-unmanaged-disk \
     --admin-username $adminUserName \
     --ssh-key-value ~/.ssh/id_rsa.pub \
     --public-ip-address-allocation static \
     --public-ip-address $publicIPName 
+
+az vm unmanaged-disk attach --resource-group $resourceGroupName --vm-name $vmName --new --size-gb 20
+az vm unmanaged-disk attach --resource-group $resourceGroupName --vm-name $vmName --new --size-gb 60
+ 
 ```
 
 The command above creates a VM 
 
-* with two extra disks of sizes 20GB and 60GB
+* we will attach two extra unmanaged disks of sizes 20GB and 60GB
 * uses the value set for adminUserName as the username to log onto the host
 * uses your ssh-key from `~/.ssh/id_rsa.pub` for passwordless login. **If your key is different, change it.**
 * allocates a static PublicIP to the host
@@ -247,7 +261,6 @@ For the node hosts, we will add VMs without PublicIps. We will setup so that all
 
 ```
 $ cat 2b.createHost.sh 
-
 #!/bin/bash
 
 az vm create --resource-group $resourceGroupName \
@@ -258,15 +271,19 @@ az vm create --resource-group $resourceGroupName \
     --vnet-name $vnetName \
     --public-ip-address "" \
     --image RHEL \
-    --data-disk-sizes-gb 20 \
+    --storage-account $storageAccountName \
+    --use-unmanaged-disk \
     --admin-username $adminUserName \
     --authentication-type password \
     --admin-password $adminPassword
+
+az vm unmanaged-disk attach --resource-group $resourceGroupName --vm-name $vmName --new --size-gb 20
+
 ```
 The above command creates a VM 
 
 * with no PublicIP
-* with an extra disk of size 20GB
+* attaches an extra unmanaged disk of size 20GB
 * uses the value set for `adminUserName` as the username to log onto the host
 * uses password based authentication using the value set for `adminPassword`
 
