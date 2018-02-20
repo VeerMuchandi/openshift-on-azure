@@ -62,7 +62,7 @@ Login into each host using the admin-username and the private ip
 
 ### Prepare the Hosts
 
-* Update the `hosts.openshiftprep` file with the internal ip addresses of all the hosts (master and the node hosts). In my case these were `10.0.0.5, 10.0.0.6 10.0.0.7, 10.0.0.8, 10.0.0.9 and 10.0.0.10`
+* Update the `hosts.openshiftprep` file with the internal ip addresses of all the hosts (master and the node hosts). In my case these were `10.0.0.4, 10.0.0.5 10.0.0.6 10.0.0.7`
 
 * Update the `openshifthostprep.yml` file to point the variable `docker_storage_mount` to where ever your extra-storage was mounted. In my case, it was `/dev/sdc`. You can find this by running `fdisk -l`
 
@@ -88,9 +88,8 @@ If you have an external DNS server, make the
 *  Wild card DNS entry/entries to point to the hosts where Router would run
 
 ```
-A	master.devday	40.112.62.165	1 Hour	Edit
-A	*.apps.devday	40.112.62.166	1 Hour	Edit
-A	*.apps.devday	40.112.62.167	1 Hour	Edit
+A	master.opsday	40.112.62.165	1 Hour	Edit
+A	*.apps.opsday	40.112.62.165	1 Hour	Edit
 ```
 
 
@@ -103,63 +102,109 @@ Edit /etc/ansible/hosts file
 * Deploys redundant registry and router 
 
 ```
+# cat /etc/ansible/hosts
 # Create an OSEv3 group that contains the masters and nodes groups
 [OSEv3:children]
 masters
 nodes
 nfs
+etcd
 
 # Set variables common for all OSEv3 hosts
 [OSEv3:vars]
 # SSH user, this user should allow ssh based auth without requiring a password
-ansible_ssh_user=veer
+ansible_ssh_user=root
 
 # If ansible_ssh_user is not root, ansible_sudo must be set to true
-ansible_sudo=true
-ansible_become=yes
+#ansible_sudo=true
+#ansible_become=yes
 
 # To deploy origin, change deployment_type to origin
 deployment_type=openshift-enterprise
 
-openshift_master_default_subdomain=apps.devday.ocpcloud.com
+openshift_clock_enabled=true
+
+# Disabling for smaller instances used for Demo purposes. Use instances with minimum disk and memory sizes required by OpenShift
+openshift_disable_check=disk_availability,memory_availability
+
+#Enable network policy plugin. This is currently Tech Preview
+os_sdn_network_plugin_name='redhat/openshift-ovs-networkpolicy'
+
+openshift_master_default_subdomain=apps.opsday.ocpcloud.com
 osm_default_node_selector="region=primary"
-openshift_hosted_router_selector='region=infra,zone=router'
+openshift_router_selector='region=infra,zone=router'
 openshift_registry_selector='region=infra'
-openshift_master_api_port=443
-openshift_master_console_port=443
+
+## The two parameters below would be used if you want API Server and Master running on 443 instead of 8443. 
+## In this cluster 443 is used by router, so we cannot use 443 for master
+#openshift_master_api_port=443
+#openshift_master_console_port=443
+
 
 openshift_hosted_registry_storage_nfs_directory=/exports
 
 
 # Metrics
-openshift_hosted_metrics_deploy=true
-openshift_hosted_metrics_storage_kind=nfs
-openshift_hosted_metrics_storage_access_modes=['ReadWriteOnce']
-openshift_hosted_metrics_storage_nfs_directory=/exports
-openshift_hosted_metrics_storage_nfs_options='*(rw,root_squash)'
-openshift_hosted_metrics_storage_volume_name=metrics
-openshift_hosted_metrics_storage_volume_size=10Gi
+openshift_metrics_install_metrics=true
+openshift_metrics_storage_kind=nfs
+openshift_metrics_storage_access_modes=['ReadWriteOnce']
+openshift_metrics_storage_nfs_directory=/exports
+openshift_metrics_storage_nfs_options='*(rw,root_squash)'
+openshift_metrics_storage_volume_name=metrics
+openshift_metrics_storage_volume_size=10Gi
+openshift_metrics_storage_labels={'storage': 'metrics'}
+openshift_master_metrics_public_url=https://hawkular-metrics.apps.opsday.ocpcloud.com/hawkular/metrics
 
+# Logging
+openshift_logging_install_logging=true
+openshift_logging_storage_kind=nfs
+openshift_logging_storage_access_modes=['ReadWriteOnce']
+openshift_logging_storage_nfs_directory=/exports
+openshift_logging_storage_nfs_options='*(rw,root_squash)'
+openshift_logging_storage_volume_name=logging
+openshift_logging_storage_volume_size=10Gi
+openshift_logging_storage_labels={'storage': 'logging'}
+openshift_master_logging_public_url=https://kibana.apps.opsday.ocpcloud.com
+
+# Registry
+openshift_hosted_registry_storage_kind=nfs
+openshift_hosted_registry_storage_access_modes=['ReadWriteMany']
+openshift_hosted_registry_storage_nfs_directory=/exports
+openshift_hosted_registry_storage_nfs_options='*(rw,root_squash)'
+openshift_hosted_registry_storage_volume_name=registry
+openshift_hosted_registry_storage_volume_size=10Gi
+
+# OAB etcd storage configuration
+openshift_hosted_etcd_storage_kind=nfs
+openshift_hosted_etcd_storage_nfs_options="*(rw,root_squash,sync,no_wdelay)"
+openshift_hosted_etcd_storage_nfs_directory=/exports
+openshift_hosted_etcd_storage_volume_name=etcd-vol2 
+openshift_hosted_etcd_storage_access_modes=["ReadWriteOnce"]
+openshift_hosted_etcd_storage_volume_size=1G
+openshift_hosted_etcd_storage_labels={'storage': 'etcd'}
+
+# template service broker
+openshift_template_service_broker_namespaces=['openshift','my-templates']
 
 # enable htpasswd authentication
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/openshift/openshift-passwd'}]
 
 # host group for masters
 [masters]
-10.0.0.5
+10.0.0.4 
 
 [nfs]
-10.0.0.5
+10.0.0.4 
+
+[etcd]
+10.0.0.4
 
 # host group for nodes, includes region info
 [nodes]
-10.0.0.5 openshift_node_labels="{'region': 'infra', 'zone': 'default'}"  openshift_scheduleable=false openshift_public_hostname=master.devday.ocpcloud.com
-10.0.0.6 openshift_node_labels="{'region': 'infra', 'zone': 'router'}" openshift_schedulable=True
-10.0.0.7 openshift_node_labels="{'region': 'infra', 'zone': 'router'}" openshift_schedulable=True
-10.0.0.8 openshift_node_labels="{'region': 'primary', 'zone': 'east'}" 
-10.0.0.9 openshift_node_labels="{'region': 'primary', 'zone': 'west'}" 
-10.0.0.10 openshift_node_labels="{'region': 'primary', 'zone': 'east'}"
-
+10.0.0.4 openshift_hostname=10.0.0.4 openshift_node_labels="{'region': 'infra', 'zone': 'router'}"  openshift_scheduleable=true openshift_public_hostname=master.opsday.ocpcloud.com 
+10.0.0.5 openshift_hostname=10.0.0.5 openshift_node_labels="{'region': 'primary', 'zone': 'east'}" 
+10.0.0.6 openshift_hostname=10.0.0.6 openshift_node_labels="{'region': 'primary', 'zone': 'west'}" 
+10.0.0.7 openshift_hostname=10.0.0.7 openshift_node_labels="{'region': 'primary', 'zone': 'central'}" 
 ```
 
 Now run the OpenShift ansible installer
